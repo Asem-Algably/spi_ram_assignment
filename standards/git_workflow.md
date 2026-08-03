@@ -25,9 +25,6 @@ Every contributor is expected to follow this workflow.
 Every feature shall follow the workflow below.
 
 ```
-Issue
-    │
-    ▼
 Assign Contributor
     │
     ▼
@@ -61,10 +58,13 @@ Approval
 Merge into main
     │
     ▼
-Delete Branch
+Delete Branch in remote repo
     │
     ▼
-Close Issue
+Delete Branch in local repo
+    │
+    ▼
+start a new feature
 ```
 
 No code shall be committed directly to the `main` branch.
@@ -79,7 +79,7 @@ The `main` branch shall always contain stable and working code.
 
 Direct commits to `main` are prohibited.
 
-All modifications shall be introduced through Pull Requests.
+All modifications shall be introduced through Pull Requests on external feature branches.
 
 ---
 
@@ -108,36 +108,7 @@ Feature branches should remain focused on a single task.
 
 ---
 
-# 4. GitHub Issues
-
-Every development task shall begin with a GitHub Issue.
-
-Issues provide:
-
-- Task description
-- Discussion
-- Progress tracking
-- Assignment
-
-Example
-
-```
-#3 Implement SPI Slave
-
-Assigned to:
-John
-
-Labels:
-rtl
-enhancement
-
-Milestone:
-v0.1
-```
-
----
-
-# 5. Development
+# 4. Development
 
 Before beginning work:
 
@@ -157,7 +128,7 @@ Development should occur only on the feature branch.
 
 ---
 
-# 6. Commits
+# 5. Commits
 
 Commits should represent logical units of work.
 
@@ -191,22 +162,20 @@ Commit messages should be concise and written in the imperative mood.
 
 ---
 
-# 7. Local Verification
+# 6. Local Verification
 
 Before opening a Pull Request, contributors should verify that:
 
 - The design compiles.
 - Simulation completes successfully.
-- The implemented functionality matches the issue requirements.
 - Coding standards are followed.
 
 ---
 
-# 8. Pull Requests
+# 7. Pull Requests
 
 Each Pull Request shall:
 
-- Resolve one GitHub Issue.
 - Target the `main` branch.
 - Include only related changes.
 
@@ -214,17 +183,10 @@ The Pull Request description should include:
 
 - Summary of changes
 - Testing performed
-- Related Issue
-
-Example
-
-```
-Closes #3
-```
 
 ---
 
-# 9. Code Review
+# 8. Code Review
 
 Every Pull Request shall be reviewed by another contributor.
 
@@ -241,7 +203,7 @@ If improvements are required, review comments should clearly describe the reques
 
 ---
 
-# 10. Updating a Pull Request
+# 9. Updating a Pull Request
 
 If review comments are received:
 
@@ -251,11 +213,11 @@ If review comments are received:
 
 The Pull Request updates automatically.
 
-A new Pull Request should not be created.
+A new Pull Request **should not** be created.
 
 ---
 
-# 11. Approval
+# 10. Approval
 
 A Pull Request may be approved only after:
 
@@ -265,31 +227,30 @@ A Pull Request may be approved only after:
 
 ---
 
-# 12. Merging
+# 11. Merging
 
 After approval:
 
 - Merge the Pull Request into `main`.
 - Delete the feature branch.
-- Close the associated GitHub Issue.
 
 The `main` branch should remain stable after every merge.
 
+note that the contributors local repos are now out of sync and they have to synchronize it though the following
+
+```bash
+git checkout main
+git pull origin main
+```
+note that for the owner of the pull request he will have a the deleted branch still on his local repo so he would need to delete it right after the branch gets merged in the main branch of the remote repo
+
+this could be achieved through the following command
+```bash
+git branch -d "branch name"
+```
 ---
 
-# 13. Branch Protection
-
-The `main` branch should be protected using GitHub Branch Protection Rules.
-
-Recommended settings:
-
-- Require Pull Requests before merging.
-- Require at least one approval.
-- Prevent direct pushes to `main`.
-
----
-
-# 14. Repository Synchronization
+# 12. Repository Synchronization
 
 Before beginning any new task:
 
@@ -298,11 +259,11 @@ git checkout main
 git pull origin main
 ```
 
-Always create new feature branches from the latest version of `main`.
+**Always create new feature branches from the latest version of `main`.**
 
 ---
 
-# 15. Merge Conflicts
+# 13. Merge Conflicts
 
 If merge conflicts occur:
 
@@ -316,17 +277,17 @@ Merge conflicts should never be resolved without understanding the affected code
 
 ---
 
-# 16. Repository Hygiene
+# 14. Repository Hygiene
 
 After a Pull Request has been merged:
 
 - Delete the feature branch.
-- Ensure the associated Issue is closed.
 - Pull the latest version of `main` before beginning the next task.
+- Delete any local feature branches that had been merged on the remote repo
 
 ---
 
-# 17. Final Principle
+# 15. Final Principle
 
 The purpose of this workflow is to ensure that every contribution is:
 
