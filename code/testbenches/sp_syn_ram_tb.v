@@ -22,7 +22,6 @@ module sp_syn_ram_tb ();
     sp_syn_ram 
     #(
         .MEM_DEPTH (MEM_DEPTH) ,
-        .ADDR_SIZE (ADDR_SIZE)
     )
     uut_sp_syn_ram
     (
