@@ -18,19 +18,17 @@ module sp_syn_ram_tb ();
     //////////////////////////////////
     spi_wrapper 
     #(
-        .MEM_DEPTH (MEM_DEPTH) ,
+        .MEM_DEPTH (MEM_DEPTH) 
     )
     uut_spi_wrapper
     (
         .clk (clk) ,
         .rst_n (rst_n), 
 
-        .din_i (din_i), 
+        .SS_n_i (SS_n_i), 
+        .MOSI_i (MOSI_i), 
 
-        .rx_valid_i (rx_valid_i), 
-
-        .dout_o (dout_o), 
-        .tx_valid_o (tx_valid_o)
+        .MISO_o (MISO_o) 
     );
 
     //////////////////////////////////
