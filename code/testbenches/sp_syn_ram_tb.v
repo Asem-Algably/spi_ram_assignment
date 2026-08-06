@@ -120,7 +120,7 @@ module sp_syn_ram_tb ();
         //////////////////////////////////
         //---  test ___10_holding_read_address___ functionality
         //////////////////////////////////
-        $info("test ___10_holding_write_address___ functionality");
+        $info("test ___10_holding_read_address___ functionality");
         //drive
         rst_n = 1 ;
         din_i [(PRE_DIN_SIZE-1)+2:(PRE_DIN_SIZE-1)+1] = 2'b10 ; 
