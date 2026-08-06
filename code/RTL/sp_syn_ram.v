@@ -26,9 +26,6 @@ module sp_syn_ram
     input clk ,
     input rst_n ,
 
-    input [(PRE_DIN_SIZE-1)+2:0] din_i , // adding 2 bits to deremine ram_operations
-                                         // note: if ADDR_SIZE != ram_width u have to handle the extra dummy bits sent
-    input rx_valid_i ,
 
     output reg [7:0] dout_o , // the ram_width = 8 bits
     output reg tx_valid_o 
