@@ -1,5 +1,6 @@
 # Ignore everything inside questa_projects
 questa_projects/*
+.vscode
 
 # But keep .gitkeep
 !questa_projects/.gitkeep
