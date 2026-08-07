@@ -154,7 +154,11 @@ module spi_slave #(
                     MISO_o <= 0;
                 end else if (!SS_n_i) begin
                     MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
-                    spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
+                    if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
+                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= {ram_data_word_seq}; // load the data from RAM into the output shift register
+                    end else begin
+                        spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
+                    end
                 end else begin
                     MISO_o <= 0;
                 end
@@ -184,7 +188,12 @@ module spi_slave #(
                     MISO_o <= 0;
                 end else if (!SS_n_i) begin
                     MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
-                    spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
+                    if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
+                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= {ram_data_word_seq}; // load the data from RAM into the output shift register
+                    end else begin
+                        spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
+                    end 
+
                 end else begin
                     MISO_o <= 0;
                 end
@@ -209,9 +218,8 @@ module spi_slave #(
         end else if (current_state_seq == READ_ADD && bit_count_seq == 4'd11) begin // read address command
             read_address_obtained_seq <= 1;
             rx_valid_o <= 1; // indicate that the read address is valid and can be sent to the RAM
-        end else if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
+        end if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
             read_address_obtained_seq <= 0;
-            spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= {ram_data_word_seq}; // load the data from RAM into the output shift register
         end 
     end
 
