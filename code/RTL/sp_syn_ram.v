@@ -1,3 +1,22 @@
+
+//-----------------------------------------------------
+// Module:
+//     sp_syn_ram
+//
+// Description:
+//     Implements a parameterizable single-port synchronous RAM.
+//     The RAM supports four operations selected by the two
+//     most significant bits of the input word:
+//
+//         00 : Store write address
+//         01 : Write data to memory
+//         10 : Store read address
+//         11 : Read data from memory and assert tx_valid_o
+//
+//     The address width is automatically derived from the
+//     memory depth, allowing the module to be reused with
+//     different memory sizes.
+//-----------------------------------------------------
 module sp_syn_ram 
     #(
     parameter MEM_DEPTH = 256 ,
