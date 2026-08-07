@@ -161,6 +161,7 @@ module spi_wrapper_tb ();
             // MOSI_i = 1 ; 
             @(negedge clk); // went to READ_ADD state
 
+            //💡 question: what is the use of randomizing the bits to be sent while we will assign them to write address any way
             bits_to_be_sent = {2'b10 , $random }; // randomize all other bits 
             bits_to_be_sent[ADDR_SIZE-1:0] = write_address ;// overwrite the bits that will be used as read_address only 
                                                             // i wrote the last write_address 
@@ -193,7 +194,8 @@ module spi_wrapper_tb ();
             // MOSI_i = 1 ; 
             @(negedge clk); // went to READ_DATA state
 
-            bits_to_be_sent = {2'b10 , $random }; // randomize all other bits as it will not be used 
+            //💡 question: the first bits should be 11, this way the ram won't return the data and will treat the data as an address
+            bits_to_be_sent = {2'b11 , $random }; // randomize all other bits as it will not be used 
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
                 MOSI_i = bits_to_be_sent[i];
@@ -203,6 +205,9 @@ module spi_wrapper_tb ();
             @(negedge clk); // internal signals : dout of the ram =  write_data sent before 
                                                 // tx_valid of the ram = 1
 
+            // 💡 question: the spi might take an extra one or two clk cycles for the data after that to start appearing on the miso bus
+            @(negedge clk); // wait until the data fully propagates through the spi interface
+            @(negedge clk); // wait until the data fully propagates through the spi interface
             
             for (i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1)  
             begin   // wait 10 clk cycles for the spi to convert dout from parallel to serial data

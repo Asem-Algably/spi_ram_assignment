@@ -1,3 +1,23 @@
+//-----------------------------------------------------
+// Module:
+//     spi_slave
+//
+// Description:
+//     Implements a parameterizable SPI slave interface
+//     supporting SPI Modes 0 through 3.
+//
+//     The module receives SPI commands from the master,
+//     decodes read and write transactions, and interfaces
+//     with the RAM through a simple request/response
+//     protocol. Received commands and data are forwarded
+//     to the RAM using rx_data_o and rx_valid_o, while
+//     read data returned by the RAM is transmitted back
+//     to the SPI master through MISO_o.
+//
+//     The SPI operating mode is selected using the
+//     SPI_MODE parameter, allowing the same module to be
+//     reused for different CPOL/CPHA configurations.
+//-----------------------------------------------------
 module spi_slave #(
     parameter SPI_MODE = 0, // 0: CPOL=0, CPHA=0; 1: CPOL=0, CPHA=1; 2: CPOL=1, CPHA=0; 3: CPOL=1, CPHA=1
     parameter MEM_DEPTH = 256 // depth of the RAM
@@ -39,7 +59,7 @@ module spi_slave #(
     reg [2:0] current_state_seq, next_state_seq;
 
     // State Memory
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             current_state_seq <= IDLE;
         end else begin
@@ -48,7 +68,7 @@ module spi_slave #(
     end
 
     // next state logic
-    always @(clk or rst_n) begin
+    always @(posedge clk) begin
         case(current_state_seq)
             IDLE: begin
                 if (!SS_n_i) begin
@@ -108,7 +128,7 @@ module spi_slave #(
     generate
         if (SPI_MODE == 0 | SPI_MODE == 3) begin : spi_mode_0_3
             // sample on rising edge of clk for SPI mode 0 and 3 and shift on falling edge of clk
-            always @(posedge clk or negedge rst_n) begin
+            always @(posedge clk) begin
                 if (!rst_n) begin
                     spi_input_shift_reg_seq <= 0;
                     spi_output_shift_reg_seq <= 0;
@@ -129,7 +149,7 @@ module spi_slave #(
                 end
             end
             
-            always @(negedge clk or negedge rst_n) begin
+            always @(negedge clk) begin
                 if (!rst_n) begin
                     MISO_o <= 0;
                 end else if (!SS_n_i) begin
@@ -141,7 +161,7 @@ module spi_slave #(
             end
         end else begin : spi_mode_1_2
             // sample on falling edge of clk for SPI mode 1 and 2 and shift on rising edge of clk
-            always @(negedge clk or negedge rst_n) begin
+            always @(negedge clk) begin
                 if (!rst_n) begin
                     spi_input_shift_reg_seq <= 0;
                     spi_output_shift_reg_seq <= 0;
@@ -159,7 +179,7 @@ module spi_slave #(
                 end
             end
             
-            always @(posedge clk or negedge rst_n) begin
+            always @(posedge clk) begin
                 if (!rst_n) begin
                     MISO_o <= 0;
                 end else if (!SS_n_i) begin
@@ -175,7 +195,7 @@ module spi_slave #(
 
     //----------------------- ram interface logic -----------------------
 
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
 
         rx_valid_o <= 0; // default value
         rx_data_o <= spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0]; // the value to be sent to the RAM
@@ -197,7 +217,7 @@ module spi_slave #(
 
     
     //-------------- storing the data received from memory --------------
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (!rst_n) begin
             ram_data_word_seq <= 0;
         end else if (tx_valid_i) begin
