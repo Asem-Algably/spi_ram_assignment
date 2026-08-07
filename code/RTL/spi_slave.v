@@ -68,50 +68,50 @@ module spi_slave #(
     end
 
     // next state logic
-    always @(posedge clk) begin
+    always @(*) begin
         case(current_state_seq)
             IDLE: begin
                 if (!SS_n_i) begin
-                    next_state_seq <= CHK_CMD;
+                    next_state_seq = CHK_CMD;
                 end else begin
-                    next_state_seq <= IDLE;
+                    next_state_seq = IDLE;
                 end
             end
             CHK_CMD: begin
                 if (SS_n_i) begin
-                    next_state_seq <= IDLE;
+                    next_state_seq = IDLE;
                 end else if (mosi_sampled_comb) begin
                     if(read_address_obtained_seq) begin
-                        next_state_seq <= READ_DATA;
+                        next_state_seq = READ_DATA;
                     end else begin
-                        next_state_seq <= READ_ADD;
+                        next_state_seq = READ_ADD;
                     end
                 end else begin
-                    next_state_seq <= WRITE;
+                    next_state_seq = WRITE;
                 end
             end
             WRITE: begin
                 if (SS_n_i) begin
-                    next_state_seq <= IDLE;
+                    next_state_seq = IDLE;
                 end else begin
-                    next_state_seq <= current_state_seq;
+                    next_state_seq = current_state_seq;
                 end
             end
             READ_ADD: begin
                 if (SS_n_i) begin
-                    next_state_seq <= IDLE;
+                    next_state_seq = IDLE;
                 end else begin
-                    next_state_seq <= current_state_seq;
+                    next_state_seq = current_state_seq;
                 end
             end
             READ_DATA: begin
                 if (SS_n_i) begin
-                    next_state_seq <= IDLE;
+                    next_state_seq = IDLE;
                 end else begin
-                    next_state_seq <= current_state_seq;
+                    next_state_seq = current_state_seq;
                 end
             end
-            default: next_state_seq <= IDLE;
+            default: next_state_seq = IDLE;
         endcase
     end
 

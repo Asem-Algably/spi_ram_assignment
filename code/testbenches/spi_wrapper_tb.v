@@ -216,7 +216,6 @@ module spi_wrapper_tb ();
                     // which was sent before
                     // the module should send the MSBs first
 
-                @(negedge clk);
 
                 if (MISO_o != write_data[i])
                 begin
@@ -226,6 +225,8 @@ module spi_wrapper_tb ();
                             // u need to debug all internal signals written above 
                             // specified in each step to determite whick operation caused the problem 
                 end
+                
+                @(negedge clk);
             end
 
             SS_n_i = 1 ; 

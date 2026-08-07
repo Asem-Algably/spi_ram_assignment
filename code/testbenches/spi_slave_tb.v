@@ -41,7 +41,9 @@ module spi_slave_tb ();
 
     // Testbench stimulus
     initial begin
+
         // Initialize inputs
+        $info("initializing the inputs");
         rst_n = 0;
         mosi_i = 0;
         ss_n_i = 1;
@@ -49,13 +51,15 @@ module spi_slave_tb ();
         tx_data_i = 0;
 
         // Apply reset
+        $info("applying reset");
         repeat (2) @(negedge clk);
         rst_n = 1;
 
         // Test sequence
+        $info("test sequence: write address command");
         repeat (2) @(negedge clk);
         ss_n_i = 0; // Activate slave select
-
+        
         // Send a write command (spi_command=01, ram_command=00, data=10101010) code = 10'h0aa
         send_spi_command(1'b0, 2'b00, 8'b10101010);
         @(negedge clk);
@@ -66,6 +70,7 @@ module spi_slave_tb ();
         ss_n_i = 0;
 
         // Send a write command (spi_command=01, ram_command=00, data=11000011) code = 10'h1c3
+        $info("test sequence: write data command");
         send_spi_command(1'b0, 2'b01, 8'b11000011);
         @(negedge clk);
 
@@ -75,6 +80,7 @@ module spi_slave_tb ();
         ss_n_i = 0;
 
         // Send a read address command (spi_command=1, ram_command=10, data=10110101) code = 10'h2b5
+        $info("test sequence: read address command");
         send_spi_command(1'b1, 2'b10, 8'b10110101);
         @(negedge clk);
         
@@ -84,6 +90,7 @@ module spi_slave_tb ();
         ss_n_i = 0;
 
         // send a read data command (spi_command=1, ram_command=11, data=11010101)
+        $info("test sequence: read data command");
         tx_valid_i = 1;
         tx_data_i = 8'b10110101;
         send_spi_command(1'b1, 2'b11, 8'b11010101);
