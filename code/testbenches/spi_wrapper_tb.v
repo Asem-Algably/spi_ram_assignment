@@ -204,6 +204,7 @@ module spi_wrapper_tb ();
                                                 // tx_valid of the ram = 1
 
             @(negedge clk); // internal signals : register in the spi_slave = write_data sent before
+            @(negedge clk); // internal signals : register in the spi_slave = write_data sent before
             
             $info("start checking the data out of the miso")
             for (i=(PRE_DIN_SIZE-1) ; i>=0; i=i-1)  
