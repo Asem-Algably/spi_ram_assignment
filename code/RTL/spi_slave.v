@@ -45,9 +45,10 @@ module spi_slave #(
     reg [SHIFT_REG_SIZE-1:0] spi_output_shift_reg_seq;
     reg [4:0] bit_count_seq;
     reg read_address_obtained_seq;
-    reg [7:0] ram_data_word_seq; // the data received from the ram
+    wire [7:0] ram_data_word_seq; // the data received from the ram
+    wire first_first_mosi_sampled_comb = spi_input_shift_reg_seq[0]; // sampled data of the MOSI line
 
-    wire mosi_sampled_comb = spi_input_shift_reg_seq[0]; // sampled data of the MOSI line
+    assign ram_data_word_seq = tx_data_i;
 
     // SPI parameters and registers
     localparam IDLE = 3'b000;
@@ -80,7 +81,7 @@ module spi_slave #(
             CHK_CMD: begin
                 if (SS_n_i) begin
                     next_state_seq = IDLE;
-                end else if (mosi_sampled_comb) begin
+                end else if (first_first_mosi_sampled_comb) begin
                     if(read_address_obtained_seq) begin
                         next_state_seq = READ_DATA;
                     end else begin
@@ -120,7 +121,7 @@ module spi_slave #(
 //                   output logic
 // the output is split into two operations
 // 1. the output and the operations related to the spi interface
-// 2. the output and the operations related to the ram interface
+// 2. the output and the operations related to the ram interfaces
 //--------------------------------------------------------------------------
 
 
@@ -131,7 +132,6 @@ module spi_slave #(
             always @(posedge clk) begin
                 if (!rst_n) begin
                     spi_input_shift_reg_seq <= 0;
-                    spi_output_shift_reg_seq <= 0;
                     bit_count_seq <= 0;
                 end else if (!SS_n_i) begin
                     // MSB is stored first, so we shift left and fill with the new bit from MOSI
@@ -151,11 +151,12 @@ module spi_slave #(
             
             always @(negedge clk) begin
                 if (!rst_n) begin
+                    spi_output_shift_reg_seq <= 0;
                     MISO_o <= 0;
                 end else if (!SS_n_i) begin
                     MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
-                    if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
-                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= {ram_data_word_seq}; // load the data from RAM into the output shift register
+                    if ((current_state_seq == READ_DATA) && tx_valid_i) begin // read data command
+                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= ram_data_word_seq; // load the data from RAM into the output shift register
                     end else begin
                         spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
                     end
@@ -188,12 +189,11 @@ module spi_slave #(
                     MISO_o <= 0;
                 end else if (!SS_n_i) begin
                     MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
-                    if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
-                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= {ram_data_word_seq}; // load the data from RAM into the output shift register
+                    if ((current_state_seq == READ_DATA) && tx_valid_i) begin // read data command
+                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= ram_data_word_seq; // load the data from RAM into the output shift register
                     end else begin
                         spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
                     end 
-
                 end else begin
                     MISO_o <= 0;
                 end
@@ -204,11 +204,10 @@ module spi_slave #(
 
     //----------------------- ram interface logic -----------------------
 
+    // rx_valid logic and read_address_obtained_seq logic
     always @(posedge clk) begin
 
         rx_valid_o <= 0; // default value
-        rx_data_o <= spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0]; // the value to be sent to the RAM
-        // read_address_obtained_seq is the last 10 bits of the shift register (excluding the command bit)
 
         if (!rst_n) begin
             read_address_obtained_seq <= 0;
@@ -220,17 +219,15 @@ module spi_slave #(
             rx_valid_o <= 1; // indicate that the read address is valid and can be sent to the RAM
         end if (current_state_seq == READ_DATA && bit_count_seq == 4'd11) begin // read data command
             read_address_obtained_seq <= 0;
+            rx_valid_o <= 1; // indicate that the read data is valid and can be sent to the RAM
         end 
     end
 
-    
-    //-------------- storing the data received from memory --------------
-    always @(posedge clk) begin
-        if (!rst_n) begin
-            ram_data_word_seq <= 0;
-        end else if (tx_valid_i) begin
-            ram_data_word_seq <= tx_data_i;
-        end
+    //rx_data_o logic
+    always @(*) begin
+        rx_data_o <= spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0]; // the value to be sent to the RAM
     end
+
+    
 
 endmodule

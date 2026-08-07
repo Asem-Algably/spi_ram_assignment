@@ -64,7 +64,7 @@ module spi_wrapper_tb ();
         //////////////////////////////////
         //---  initializing the mem
         //////////////////////////////////
-        $readmemh("../code/testbenches/mem_8_256_all_zeros.dat",uut_spi_wrapper.inst_sp_syn_ram.mem) ; // u need to extend or shrink the mem.data file if u changed MEM_DEPTH
+        $readmemh("../code/testbenches/mem_8_256.dat",uut_spi_wrapper.inst_sp_syn_ram.mem) ; // u need to extend or shrink the mem.data file if u changed MEM_DEPTH
 
 
         //////////////////////////////////
@@ -107,7 +107,8 @@ module spi_wrapper_tb ();
             // MOSI_i = 0 ; 
             @(negedge clk); // went to WRITE state
 
-            bits_to_be_sent = {2'b00 , $random };
+            bits_to_be_sent = $random;
+            bits_to_be_sent[9:8] = 2'b00;
             write_address = bits_to_be_sent[ADDR_SIZE-1:0] ;
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
@@ -134,7 +135,8 @@ module spi_wrapper_tb ();
             // MOSI_i = 0 ; 
             @(negedge clk); // went to WRITE state
 
-            bits_to_be_sent = {2'b01 , $random };
+            bits_to_be_sent = $random;
+            bits_to_be_sent[9:8] = 2'b01;
             write_data = bits_to_be_sent [7:0] ;
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
@@ -162,7 +164,9 @@ module spi_wrapper_tb ();
             @(negedge clk); // went to READ_ADD state
 
             //💡 question: what is the use of randomizing the bits to be sent while we will assign them to write address any way
-            bits_to_be_sent = {2'b10 , $random }; // randomize all other bits 
+            // randomize all other bits 
+            bits_to_be_sent = $random;
+            bits_to_be_sent[9:8] = 2'b10;
             bits_to_be_sent[ADDR_SIZE-1:0] = write_address ;// overwrite the bits that will be used as read_address only 
                                                             // i wrote the last write_address 
                                                             // to make sure the write_data has been saved in the correctle in the righet place or not
@@ -195,7 +199,9 @@ module spi_wrapper_tb ();
             @(negedge clk); // went to READ_DATA state
 
             //💡 question: the first bits should be 11, this way the ram won't return the data and will treat the data as an address
-            bits_to_be_sent = {2'b11 , $random }; // randomize all other bits as it will not be used 
+            // randomize all other bits as it will not be used 
+            bits_to_be_sent = $random;
+            bits_to_be_sent[9:8] = 2'b11;
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
                 MOSI_i = bits_to_be_sent[i];
@@ -208,15 +214,17 @@ module spi_wrapper_tb ();
             // 💡 question: the spi might take an extra one or two clk cycles for the data after that to start appearing on the miso bus
             @(negedge clk); // wait until the data fully propagates through the spi interface
             @(negedge clk); // wait until the data fully propagates through the spi interface
+            // @(negedge clk); // wait until the data fully propagates through the spi interface
             
-            for (i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1)  
+            $info("start checking the data out of the miso");
+            for (i=(PRE_DIN_SIZE-1) ; i>=0; i=i-1)  
             begin   // wait 10 clk cycles for the spi to convert dout from parallel to serial data
                     // data will be sent bit by bit at each clk cycle
                     // i will compare each bit sent on MISO_o with the "write_data" bits 
                     // which was sent before
                     // the module should send the MSBs first
 
-
+                @(posedge clk); // wait until the data fully propagates through the spi interface
                 if (MISO_o != write_data[i])
                 begin
                     $display("reading_from_memory error functionality.");
@@ -226,9 +234,9 @@ module spi_wrapper_tb ();
                             // specified in each step to determite whick operation caused the problem 
                 end
                 
-                @(negedge clk);
             end
 
+            @(negedge clk);
             SS_n_i = 1 ; 
             @(negedge clk); // went to IDLE state 
             
