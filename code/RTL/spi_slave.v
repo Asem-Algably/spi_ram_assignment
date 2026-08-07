@@ -45,10 +45,10 @@ module spi_slave #(
     reg [SHIFT_REG_SIZE-1:0] spi_output_shift_reg_seq;
     reg [4:0] bit_count_seq;
     reg read_address_obtained_seq;
-    wire [7:0] ram_data_word_seq; // the data received from the ram
+    wire [7:0] ram_data_word_comp; // the data received from the ram
     wire first_first_mosi_sampled_comb = spi_input_shift_reg_seq[0]; // sampled data of the MOSI line
 
-    assign ram_data_word_seq = tx_data_i;
+    assign ram_data_word_comp = tx_data_i;
 
     // SPI parameters and registers
     localparam IDLE = 3'b000;
@@ -156,7 +156,7 @@ module spi_slave #(
                 end else if (!SS_n_i) begin
                     MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
                     if ((current_state_seq == READ_DATA) && tx_valid_i) begin // read data command
-                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= ram_data_word_seq; // load the data from RAM into the output shift register
+                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= ram_data_word_comp; // load the data from RAM into the output shift register
                     end else begin
                         spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
                     end
@@ -190,7 +190,7 @@ module spi_slave #(
                 end else if (!SS_n_i) begin
                     MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
                     if ((current_state_seq == READ_DATA) && tx_valid_i) begin // read data command
-                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= ram_data_word_seq; // load the data from RAM into the output shift register
+                        spi_output_shift_reg_seq[SHIFT_REG_SIZE-1:2] <= ram_data_word_comp; // load the data from RAM into the output shift register
                     end else begin
                         spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
                     end 
