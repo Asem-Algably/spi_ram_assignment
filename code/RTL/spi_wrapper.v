@@ -1,3 +1,18 @@
+//-----------------------------------------------------
+// Module:
+//     spi_wrapper
+//
+// Description:
+//     Top-level module that integrates the SPI slave
+//     interface with the single-port synchronous RAM.
+//
+//     The wrapper connects the SPI slave and RAM modules,
+//     routing commands received over the SPI interface to
+//     the RAM and returning read data back to the SPI
+//     master. Memory-related parameters are propagated to
+//     the underlying modules to ensure a consistent system
+//     configuration.
+//-----------------------------------------------------
 module spi_wrapper 
     #(
     parameter MEM_DEPTH = 256 ,
