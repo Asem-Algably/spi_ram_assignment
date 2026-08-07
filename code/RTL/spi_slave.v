@@ -1,23 +1,24 @@
 module spi_slave #(
-    SPI_MODE = 0, // 0: CPOL=0, CPHA=0; 1: CPOL=0, CPHA=1; 2: CPOL=1, CPHA=0; 3: CPOL=1, CPHA=1
+    parameter SPI_MODE = 0, // 0: CPOL=0, CPHA=0; 1: CPOL=0, CPHA=1; 2: CPOL=1, CPHA=0; 3: CPOL=1, CPHA=1
+    parameter MEM_DEPTH = 256 // depth of the RAM
 )(
     input clk,
     input rst_n,
 
     // spi inputs
-    input mosi_i,
-    input ss_n_i,
+    input MOSI_i,
+    input SS_n_i,
 
     // ram inputs
     input tx_valid_i,
     input [7:0] tx_data_i,
 
     // spi outputs
-    output miso_o,
+    output reg MISO_o,
 
     // ram outputs
-    output rx_valid_o,
-    output [9:0] rx_data_o
+    output reg rx_valid_o,
+    output reg [9:0] rx_data_o
 );
     localparam SHIFT_REG_SIZE = 11; // 1 bit for command + 10 bits for data/address
     reg [SHIFT_REG_SIZE-1:0] spi_input_shift_reg_seq;
@@ -35,7 +36,7 @@ module spi_slave #(
     localparam READ_ADD = 3'b011;
     localparam READ_DATA = 3'b100;
 
-    reg [3:0] current_state_seq, next_state_seq;
+    reg [2:0] current_state_seq, next_state_seq;
 
     // State Memory
     always @(posedge clk or negedge rst_n) begin
@@ -50,14 +51,14 @@ module spi_slave #(
     always @(clk or rst_n) begin
         case(current_state_seq)
             IDLE: begin
-                if (!ss_n_i) begin
+                if (!SS_n_i) begin
                     next_state_seq <= CHK_CMD;
                 end else begin
                     next_state_seq <= IDLE;
                 end
             end
             CHK_CMD: begin
-                if (ss_n_i) begin
+                if (SS_n_i) begin
                     next_state_seq <= IDLE;
                 end else if (mosi_sampled_comb) begin
                     if(read_address_obtained_seq) begin
@@ -70,21 +71,21 @@ module spi_slave #(
                 end
             end
             WRITE: begin
-                if (ss_n_i) begin
+                if (SS_n_i) begin
                     next_state_seq <= IDLE;
                 end else begin
                     next_state_seq <= current_state_seq;
                 end
             end
             READ_ADD: begin
-                if (ss_n_i) begin
+                if (SS_n_i) begin
                     next_state_seq <= IDLE;
                 end else begin
                     next_state_seq <= current_state_seq;
                 end
             end
             READ_DATA: begin
-                if (ss_n_i) begin
+                if (SS_n_i) begin
                     next_state_seq <= IDLE;
                 end else begin
                     next_state_seq <= current_state_seq;
@@ -104,7 +105,7 @@ module spi_slave #(
 
 
     //---------------------- SPI shift register logic ----------------------
-    generate;
+    generate
         if (SPI_MODE == 0 | SPI_MODE == 3) begin : spi_mode_0_3
             // sample on rising edge of clk for SPI mode 0 and 3 and shift on falling edge of clk
             always @(posedge clk or negedge rst_n) begin
@@ -112,9 +113,9 @@ module spi_slave #(
                     spi_input_shift_reg_seq <= 0;
                     spi_output_shift_reg_seq <= 0;
                     bit_count_seq <= 0;
-                end else if (!ss_n_i) begin
+                end else if (!SS_n_i) begin
                     // MSB is stored first, so we shift left and fill with the new bit from MOSI
-                    spi_input_shift_reg_seq <= {spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0], mosi_i};
+                    spi_input_shift_reg_seq <= {spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0], MOSI_i};
 
                     // don't increment bit_count_seq beyond 11, as we only need to capture 11 bits (1 command + 10 data/address)
                     // the counter is allowed to reach 12 to stop any logic that depends on it reaching 11
@@ -130,12 +131,12 @@ module spi_slave #(
             
             always @(negedge clk or negedge rst_n) begin
                 if (!rst_n) begin
-                    miso_o <= 0;
-                end else if (!ss_n_i) begin
-                    miso_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
+                    MISO_o <= 0;
+                end else if (!SS_n_i) begin
+                    MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
                     spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
                 end else begin
-                    miso_o <= 0;
+                    MISO_o <= 0;
                 end
             end
         end else begin : spi_mode_1_2
@@ -145,9 +146,9 @@ module spi_slave #(
                     spi_input_shift_reg_seq <= 0;
                     spi_output_shift_reg_seq <= 0;
                     bit_count_seq <= 0;
-                end else if (!ss_n_i) begin
+                end else if (!SS_n_i) begin
                     // MSB is stored first, so we shift left and fill with the new bit from MOSI
-                    spi_input_shift_reg_seq <= {spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0], mosi_i};
+                    spi_input_shift_reg_seq <= {spi_input_shift_reg_seq[SHIFT_REG_SIZE-2:0], MOSI_i};
                     // don't increment bit_count_seq beyond 11, as we only need to capture 11 bits (1 command + 10 data/address)
                     if(bit_count_seq < 4'd11) begin
                         bit_count_seq <= bit_count_seq + 1;
@@ -160,17 +161,15 @@ module spi_slave #(
             
             always @(posedge clk or negedge rst_n) begin
                 if (!rst_n) begin
-                    miso_o <= 0;
-                end else if (!ss_n_i) begin
-                    miso_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
+                    MISO_o <= 0;
+                end else if (!SS_n_i) begin
+                    MISO_o <= spi_output_shift_reg_seq[SHIFT_REG_SIZE-1]; // MSB of the shift register is the data to be sent out
                     spi_output_shift_reg_seq <= {spi_output_shift_reg_seq[SHIFT_REG_SIZE-2:0], 1'b0}; // shift right and fill with 0
                 end else begin
-                    miso_o <= 0;
+                    MISO_o <= 0;
                 end
             end
         end
-
-        
     endgenerate
 
 
