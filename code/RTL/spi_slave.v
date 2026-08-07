@@ -35,7 +35,8 @@ module spi_slave #(
     localparam WRITE = 3'b010;
     localparam READ_ADD = 3'b011;
     localparam READ_DATA = 3'b100;
-
+    
+    (* fsm_encoding = "gray" *)
     reg [2:0] current_state_seq, next_state_seq;
 
     // State Memory

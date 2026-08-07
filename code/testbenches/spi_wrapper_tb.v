@@ -107,7 +107,7 @@ module spi_wrapper_tb ();
             // MOSI_i = 0 ; 
             @(negedge clk); // went to WRITE state
 
-            bits_to_be_sent = {2'b00 , $random };
+            bits_to_be_sent = {2'b00 , $random[(PRE_DIN_SIZE-1):0] };
             write_address = bits_to_be_sent[ADDR_SIZE-1:0] ;
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
@@ -134,7 +134,7 @@ module spi_wrapper_tb ();
             // MOSI_i = 0 ; 
             @(negedge clk); // went to WRITE state
 
-            bits_to_be_sent = {2'b01 , $random };
+            bits_to_be_sent = {2'b01 , $random[(PRE_DIN_SIZE-1):0] };
             write_data = bits_to_be_sent [7:0] ;
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
@@ -161,7 +161,7 @@ module spi_wrapper_tb ();
             // MOSI_i = 1 ; 
             @(negedge clk); // went to READ_ADD state
 
-            bits_to_be_sent = {2'b10 , $random }; // randomize all other bits 
+            bits_to_be_sent = {2'b10 , $random[(PRE_DIN_SIZE-1):0] }; // randomize all other bits 
             bits_to_be_sent[ADDR_SIZE-1:0] = write_address ;// overwrite the bits that will be used as read_address only 
                                                             // i wrote the last write_address 
                                                             // to make sure the write_data has been saved in the correctle in the righet place or not
@@ -193,7 +193,7 @@ module spi_wrapper_tb ();
             // MOSI_i = 1 ; 
             @(negedge clk); // went to READ_DATA state
 
-            bits_to_be_sent = {2'b10 , $random }; // randomize all other bits as it will not be used 
+            bits_to_be_sent = {2'b11 , $random[(PRE_DIN_SIZE-1):0] }; // randomize all other bits as it will not be used 
             for ( i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1) 
             begin
                 MOSI_i = bits_to_be_sent[i];
@@ -203,25 +203,29 @@ module spi_wrapper_tb ();
             @(negedge clk); // internal signals : dout of the ram =  write_data sent before 
                                                 // tx_valid of the ram = 1
 
+            @(negedge clk); // internal signals : register in the spi_slave = write_data sent before
             
-            for (i=(PRE_DIN_SIZE-1)+2 ; i>=0; i=i-1)  
-            begin   // wait 10 clk cycles for the spi to convert dout from parallel to serial data
+            $info("start checking the data out of the miso")
+            for (i=(PRE_DIN_SIZE-1) ; i>=0; i=i-1)  
+            begin   // during 10 clk cycles for the spi to convert dout from parallel to serial data
                     // data will be sent bit by bit at each clk cycle
                     // i will compare each bit sent on MISO_o with the "write_data" bits 
                     // which was sent before
                     // the module should send the MSBs first
 
-                @(negedge clk);
+                @(posedge clk);
 
                 if (MISO_o != write_data[i])
                 begin
                     $display("reading_from_memory error functionality.");
-                    $stop;  // u can rely on the self cheking to verify everything is perfect
+                    $stop;  // u can rely on the self checking to verify everything is perfect
                             // but if u faced a problem at this point 
                             // u need to debug all internal signals written above 
-                            // specified in each step to determite whick operation caused the problem 
+                            // specified in each step to determite which operation caused the problem 
                 end
             end
+
+            @(negedge clk); // drive at the negative edge 
 
             SS_n_i = 1 ; 
             @(negedge clk); // went to IDLE state 
